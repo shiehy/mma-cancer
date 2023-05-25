@@ -1,0 +1,65 @@
+---
+title: "NHANES MMA Data"
+author: "Rachel Heise, MS"
+pi: "Yiwey Shieh, MD"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  wcmtheme::wcm_html: 
+    toc: true
+    toc_float: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(lubridate)
+library(gtsummary)
+library(haven)
+library(labelled)
+
+load(here::here("./output/NHANES_dat.RData"))
+```
+
+## Demographics
+
+```{r}
+demo %>% 
+  filter(SEQN %in% mma$SEQN) %>% 
+  mutate(age = case_when(age == ">= 85 years" ~ as.character(85),
+                         TRUE ~ as.character(age)),
+         age = as.numeric(age)) %>% 
+  select(-SEQN) %>% 
+  tbl_summary() %>% 
+  bold_labels()
+```
+
+## MMA
+
+```{r}
+mma %>% 
+  filter(SEQN %in% demo$SEQN) %>% 
+  select(-SEQN) %>% 
+  tbl_summary() %>% 
+  bold_labels()
+```
+
+## Creatinine
+
+```{r}
+creatinine %>% 
+  select(-SEQN) %>% 
+  tbl_summary() %>% 
+  bold_labels()
+```
+
+## B12
+
+```{r}
+b12 %>% 
+  select(-SEQN) %>% 
+  tbl_summary() %>% 
+  bold_labels()
+```
+
