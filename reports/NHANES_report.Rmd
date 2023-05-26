@@ -19,47 +19,79 @@ library(gtsummary)
 library(haven)
 library(labelled)
 
+set_gtsummary_theme(theme_gtsummary_compact())
+theme_set(theme_minimal())
+
 load(here::here("./output/NHANES_dat.RData"))
+
+nhanes_dat <- demo %>% 
+  full_join(b12 %>% select(-year), by = "SEQN") %>% 
+  full_join(creatinine %>% select(-year), by = "SEQN") %>% 
+  full_join(mma %>% select(-year), by = "SEQN") %>% 
+  filter(!is.na(B12) | !is.na(CREATININE) | !is.na(MMA)) %>% # remove data points without mma, b12, or creatinine data
+  mutate(complete_data = if_else(!is.na(B12) & !is.na(CREATININE) & !is.na(MMA), 1, 0),
+         age = case_when(age == ">= 85 years" ~ as.character(85),
+                         TRUE ~ as.character(age)),
+         age = as.numeric(age),
+         age_cat = case_when(age < 10 ~ "<10",
+                             age >= 10 & age < 20 ~ "10-19",
+                             age >= 20 & age < 30 ~ "20-29",
+                             age >= 30 & age < 40 ~ "30-39",
+                             age >= 40 & age < 50 ~ "40-49",
+                             age >= 50 & age < 60 ~ "50-59",
+                             age >= 60 & age < 70 ~ "60-69",
+                             age >= 70 & age < 80 ~ "70-79",
+                             age >= 80 ~ "80+"))
 ```
 
 ## Demographics
 
 ```{r}
-demo %>% 
-  filter(SEQN %in% mma$SEQN) %>% 
-  mutate(age = case_when(age == ">= 85 years" ~ as.character(85),
-                         TRUE ~ as.character(age)),
-         age = as.numeric(age)) %>% 
+nhanes_dat %>% 
+  # filter(SEQN %in% mma$SEQN) %>% 
   select(-SEQN) %>% 
   tbl_summary() %>% 
   bold_labels()
 ```
 
-## MMA
+## Lab results by age
 
-```{r}
-mma %>% 
-  filter(SEQN %in% demo$SEQN) %>% 
-  select(-SEQN) %>% 
-  tbl_summary() %>% 
-  bold_labels()
+```{r, warning = FALSE}
+nhanes_dat %>% 
+  ggplot(aes(x = age_cat, y = MMA)) +
+  geom_boxplot() +
+  labs(x = "Age category")
+
+nhanes_dat %>% 
+  ggplot(aes(x = age_cat, y = B12)) +
+  geom_boxplot() +
+  labs(x = "Age category")
+
+nhanes_dat %>% 
+  ggplot(aes(x = age_cat, y = CREATININE)) +
+  geom_boxplot() +
+  labs(x = "Age category")
+
 ```
 
-## Creatinine
+## Extreme Outliers
 
-```{r}
-creatinine %>% 
-  select(-SEQN) %>% 
+```{r, message = FALSE}
+library(rstatix)
+mma_outliers <- identify_outliers(nhanes_dat, variable = "MMA") %>% 
+  filter(is.extreme == TRUE)
+creatinine_outliers <- identify_outliers(nhanes_dat, variable = "CREATININE") %>% 
+  filter(is.extreme == TRUE)
+b12_outliers <- identify_outliers(nhanes_dat, variable = "B12") %>% 
+  filter(is.extreme == TRUE)
+
+nhanes_dat %>% 
+  mutate(mma_outlier = if_else(SEQN %in% mma_outliers$SEQN, 1, 0),
+         b12_outlier = if_else(SEQN %in% b12_outliers$SEQN, 1, 0),
+         creatinine_outlier = if_else(SEQN %in% creatinine_outliers$SEQN, 1, 0)) %>% 
+  select(contains("outlier")) %>% 
   tbl_summary() %>% 
   bold_labels()
-```
 
-## B12
-
-```{r}
-b12 %>% 
-  select(-SEQN) %>% 
-  tbl_summary() %>% 
-  bold_labels()
 ```
 

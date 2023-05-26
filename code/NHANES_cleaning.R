@@ -10,13 +10,16 @@ mma_2001_o <- read_xpt("./data/MMA_B12_B_2001.XPT") # this data contains both mm
 mma_2003 <- read_xpt("./data/MMA_C_2003.XPT")
 mma_2011 <- read_xpt("./data/MMA_G_2011.XPT")
 mma_2013 <- read_xpt("./data/MMA_H_2013.XPT")
+# mma_second_2001 <- read_xpt("./data/MMA_second_2001.XPT")
 b12_2003 <- read_xpt("./data/B12_C_2003.XPT")
 b12_2011 <- read_xpt("./data/B12_G_2011.XPT")
 b12_2013 <- read_xpt("./data/B12_H_2013.XPT")
+# b12_second_2001 <- read_xpt("./data/B12_second_2001.XPT")
 creatinine_2001 <- read_xpt("./data/CREATININE_B_2001.XPT")
 creatinine_2003 <- read_xpt("./data/CREATININE_C_2003.XPT")
 creatinine_2011 <- read_xpt("./data/CREATININE_G_2011.XPT")
 creatinine_2013 <- read_xpt("./data/CREATININE_H_2013.XPT")
+# creatinine_second_2001 <- read_xpt("./data/CREATININE_second_2001.XPT")
 demo_2001 <- read_xpt("./data/DEMO_B_2001.XPT")
 demo_2003 <- read_xpt("./data/DEMO_C_2003.XPT")
 demo_2011 <- read_xpt("./data/DEMO_G_2011.XPT")
@@ -47,6 +50,7 @@ mma_2013 <- mma_2013 %>%
   rename(MMA = LBXMMASI) %>% 
   set_variable_labels(MMA = "Methylmalonic acid (nmol/L)") %>% 
   mutate(year = "2013-2014")
+
 
 b12_2001 <- mma_2001_o %>% 
   select(SEQN, LB2B12) %>% 
