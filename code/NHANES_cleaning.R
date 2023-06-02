@@ -29,130 +29,88 @@ mma_2001 <- mma_2001_o %>%
   select(SEQN, LB2MMA) %>% 
   rename(MMA = LB2MMA) %>% 
   mutate(MMA = MMA*1000) %>%  # convert to nmol/L
-  set_variable_labels(MMA = "Methylmalonic acid (nmol/L)") %>% 
-  mutate(year = "2001-2002")
-  
+  set_variable_labels(MMA = "Methylmalonic acid (nmol/L)")
+
 mma_2003 <- mma_2003 %>% 
   select(SEQN, LBXMMA) %>% 
   rename(MMA = LBXMMA) %>% 
   mutate(MMA = MMA*1000) %>% # convert to nmol/L from umol/L
-  set_variable_labels(MMA = "Methylmalonic acid (nmol/L)") %>% 
-  mutate(year = "2003-2004")
+  set_variable_labels(MMA = "Methylmalonic acid (nmol/L)")
 
 mma_2011 <- mma_2011 %>% 
   select(SEQN, LBXMMASI) %>% 
   rename(MMA = LBXMMASI) %>% 
-  set_variable_labels(MMA = "Methylmalonic acid (nmol/L)") %>% 
-  mutate(year = "2011-2012")
+  set_variable_labels(MMA = "Methylmalonic acid (nmol/L)")
 
 mma_2013 <- mma_2013 %>% 
   select(SEQN, LBXMMASI) %>% 
   rename(MMA = LBXMMASI) %>% 
-  set_variable_labels(MMA = "Methylmalonic acid (nmol/L)") %>% 
-  mutate(year = "2013-2014")
+  set_variable_labels(MMA = "Methylmalonic acid (nmol/L)")
 
 
 b12_2001 <- mma_2001_o %>% 
   select(SEQN, LB2B12) %>% 
   rename(B12 = LB2B12) %>% 
-  set_variable_labels(B12 = "Serum B12 (pg/mL)") %>% 
-  mutate(year = "2001-2002")
+  set_variable_labels(B12 = "Serum B12 (pg/mL)")
 
 b12_2003 <- b12_2003 %>% 
   select(SEQN, LBXB12) %>% 
   rename(B12 = LBXB12) %>% 
-  set_variable_labels(B12 = "Serum B12 (pg/mL)") %>% 
-  mutate(year = "2003-2004")
+  set_variable_labels(B12 = "Serum B12 (pg/mL)")
 
 b12_2011 <- b12_2011 %>% 
   select(SEQN, LBXB12) %>% 
   rename(B12 = LBXB12) %>% 
-  set_variable_labels(B12 = "Serum B12 (pg/mL)") %>% 
-  mutate(year = "2011-2012")
+  set_variable_labels(B12 = "Serum B12 (pg/mL)") 
 
 b12_2013 <- b12_2013 %>% 
   select(SEQN, LBDB12) %>% 
   rename(B12 = LBDB12) %>% 
-  set_variable_labels(B12 = "Serum B12 (pg/mL)") %>% 
-  mutate(year = "2013-2014")
+  set_variable_labels(B12 = "Serum B12 (pg/mL)")
 
 creatinine_2001 <- creatinine_2001 %>% 
   select(SEQN, URXUCR) %>% 
   rename(CREATININE = URXUCR) %>% 
-  set_variable_labels(CREATININE = "Creatinine (mg/dL)") %>% 
-  mutate(year = "2001-2002")
+  set_variable_labels(CREATININE = "Creatinine (mg/dL)")
 
 creatinine_2003 <- creatinine_2003 %>% 
   select(SEQN, URXUCR) %>% 
   rename(CREATININE = URXUCR) %>% 
-  set_variable_labels(CREATININE = "Creatinine (mg/dL)") %>% 
-  mutate(year = "2003-2004")
+  set_variable_labels(CREATININE = "Creatinine (mg/dL)")
 
 creatinine_2011 <- creatinine_2011 %>% 
   select(SEQN, URXUCR) %>% 
   rename(CREATININE = URXUCR) %>% 
-  set_variable_labels(CREATININE = "Creatinine (mg/dL)") %>% 
-  mutate(year = "2011-2012")
+  set_variable_labels(CREATININE = "Creatinine (mg/dL)")
 
 creatinine_2013 <- creatinine_2013 %>% 
   select(SEQN, URXUCR) %>% 
   rename(CREATININE = URXUCR) %>% 
-  set_variable_labels(CREATININE = "Creatinine (mg/dL)") %>% 
-  mutate(year = "2013-2014")
+  set_variable_labels(CREATININE = "Creatinine (mg/dL)")
 
 demo_2001 <- demo_2001 %>% 
   select(SEQN, RIAGENDR, RIDAGEYR, RIDRETH1) %>% 
-  rename(age = RIDAGEYR,
-         race_ethnicity = RIDRETH1,
-         gender = RIAGENDR) %>% 
-  mutate(race_ethnicity = case_when(race_ethnicity == 1 ~ "Mexican American",
-                                    race_ethnicity == 2 ~ "Other Hispanic",
-                                    race_ethnicity == 3 ~ "Non-Hispanic White",
-                                    race_ethnicity == 4 ~ "Non-Hispanic Black",
-                                    race_ethnicity == 5 ~ "Other race, including multi-racial"),
-         gender = case_when(gender == 1 ~ "Male",
-                            gender == 2 ~ "Female"),
-         age = case_when(age < 85 ~ as.character(age),
-                         age == 85 ~ ">= 85 years"),
-         year = "2001-2002")
+  mutate(year = "2001-2002")
   
 demo_2003 <- demo_2003 %>% 
   select(SEQN, RIAGENDR, RIDAGEYR, RIDRETH1) %>% 
-  rename(age = RIDAGEYR,
-         race_ethnicity = RIDRETH1,
-         gender = RIAGENDR) %>% 
-  mutate(race_ethnicity = case_when(race_ethnicity == 1 ~ "Mexican American",
-                                    race_ethnicity == 2 ~ "Other Hispanic",
-                                    race_ethnicity == 3 ~ "Non-Hispanic White",
-                                    race_ethnicity == 4 ~ "Non-Hispanic Black",
-                                    race_ethnicity == 5 ~ "Other race, including multi-racial"),
-         gender = case_when(gender == 1 ~ "Male",
-                            gender == 2 ~ "Female"),
-         age = case_when(age < 85 ~ as.character(age),
-                         age == 85 ~ ">= 85 years"),
-         year = "2003-2004")
+  mutate(year = "2003-2004")
   
 demo_2011 <- demo_2011 %>% 
   select(SEQN, RIAGENDR, RIDAGEYR, RIDRETH1) %>% 
-  rename(age = RIDAGEYR,
-         race_ethnicity = RIDRETH1,
-         gender = RIAGENDR) %>% 
-  mutate(race_ethnicity = case_when(race_ethnicity == 1 ~ "Mexican American",
-                                    race_ethnicity == 2 ~ "Other Hispanic",
-                                    race_ethnicity == 3 ~ "Non-Hispanic White",
-                                    race_ethnicity == 4 ~ "Non-Hispanic Black",
-                                    race_ethnicity == 5 ~ "Other race, including multi-racial"),
-         gender = case_when(gender == 1 ~ "Male",
-                            gender == 2 ~ "Female"),
-         age = case_when(age < 85 ~ as.character(age),
-                         age == 85 ~ ">= 85 years"),
-         year = "2011-2012")
+  mutate(year = "2011-2012")
 
 demo_2013 <- demo_2013 %>% 
   select(SEQN, RIAGENDR, RIDAGEYR, RIDRETH1) %>% 
+  mutate(year = "2013-2014")
+
+
+demo <- rbind(demo_2001, demo_2003, demo_2011, demo_2013)
+
+demo <- demo %>% 
   rename(age = RIDAGEYR,
          race_ethnicity = RIDRETH1,
-         gender = RIAGENDR) %>% 
+         gender = RIAGENDR) %>%
   mutate(race_ethnicity = case_when(race_ethnicity == 1 ~ "Mexican American",
                                     race_ethnicity == 2 ~ "Other Hispanic",
                                     race_ethnicity == 3 ~ "Non-Hispanic White",
@@ -160,16 +118,29 @@ demo_2013 <- demo_2013 %>%
                                     race_ethnicity == 5 ~ "Other race, including multi-racial"),
          gender = case_when(gender == 1 ~ "Male",
                             gender == 2 ~ "Female"),
-         age = case_when(age < 85 ~ as.character(age),
-                         age == 85 ~ ">= 85 years"),
-         year = "2013-2014")
+         age_cat = case_when(age < 10 ~ "<10",
+                             age >= 10 & age < 20 ~ "10-19",
+                             age >= 20 & age < 30 ~ "20-29",
+                             age >= 30 & age < 40 ~ "30-39",
+                             age >= 40 & age < 50 ~ "40-49",
+                             age >= 50 & age < 60 ~ "50-59",
+                             age >= 60 & age < 70 ~ "60-69",
+                             age >= 70 & age < 80 ~ "70-79",
+                             age >= 80 ~ "80+"))
 
-demo <- rbind(demo_2001, demo_2003, demo_2011, demo_2013)
+
 b12 <- rbind(b12_2001, b12_2003, b12_2011, b12_2013)
 creatinine <- rbind(creatinine_2001, creatinine_2003, creatinine_2011,
                     creatinine_2013)  
 mma <- rbind(mma_2001, mma_2003, mma_2011, mma_2013) 
 
+nhanes_dat <- demo %>% 
+  full_join(b12, by = "SEQN") %>% 
+  full_join(creatinine, by = "SEQN") %>% 
+  full_join(mma, by = "SEQN") %>% 
+  filter(!is.na(B12) | !is.na(CREATININE) | !is.na(MMA)) %>% # remove data points without mma, b12, or creatinine data
+  mutate(complete_data = if_else(!is.na(B12) & !is.na(CREATININE) & !is.na(MMA), 1, 0))
 
-save(demo, b12, creatinine, mma, file = "./output/NHANES_dat.RData")
+
+save(nhanes_dat, file = "./output/NHANES_dat.RData")
 
