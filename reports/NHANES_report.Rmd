@@ -24,6 +24,10 @@ set_gtsummary_theme(theme_gtsummary_compact())
 theme_set(theme_minimal())
 
 load(here::here("./output/NHANES_dat.RData"))
+
+# remove patients without complete MMA, B12, and creatinine data
+nhanes_dat <- nhanes_dat %>% 
+  filter(complete_data == 1)
 ```
 
 ## Demographics
@@ -41,32 +45,61 @@ nhanes_dat %>%
 
 ## Lab results by age category
 
+### MMA
+
 ```{r, fig.width=5, fig.height=4}
 nhanes_dat %>% 
-  filter(!is.na(MMA)) %>% 
+  ggplot(aes(x = age_cat, y = log(MMA))) +
+  geom_boxplot() +
+  labs(x = "Age category")
+```
+
+```{r, fig.width=5, fig.height=4}
+nhanes_dat %>% 
+  filter(B12 > 300, CREATININE < 1.3) %>% 
   ggplot(aes(x = age_cat, y = MMA)) +
   geom_boxplot() +
-  labs(x = "Age category")
+  labs(x = "Age category",
+       title = "MMA for participants with B12 > 300 and \n serum creatinine < 1.3")
+```
+
+```{r, fig.width=5, fig.height=4}
+nhanes_dat %>% 
+  filter(B12 > 300, CREATININE < 1.3) %>% 
+  ggplot(aes(x = age_cat, y = log(MMA))) +
+  geom_boxplot() +
+  labs(x = "Age category",
+       title = "log(MMA) for participants with B12 > 300 and \n serum creatinine < 1.3")
+```
+
+```{r, fig.width=5, fig.height=4, message=FALSE}
+nhanes_dat %>% 
+  filter(B12 > 300, CREATININE < 1.3) %>% 
+  ggplot(aes(x = log(MMA))) +
+  geom_histogram() +
+  labs(title = "log(MMA) for participants with B12 > 300 and \n serum creatinine < 1.3")
 ```
 
 <br>
 
+### B12
+
 ```{r, fig.width=5, fig.height=4}
 nhanes_dat %>% 
-  filter(!is.na(B12)) %>% 
-  ggplot(aes(x = age_cat, y = B12)) +
+  ggplot(aes(x = age_cat, y = log(B12))) +
   geom_boxplot() +
-  labs(x = "Age category")
+  labs(x = "Age category",
+       y = "log(B12) (pg/mL)")
 ```
 
+### Creatinine
 <br>
 
 ```{r, fig.width=5, fig.height=4}
 nhanes_dat %>% 
-  filter(!is.na(CREATININE)) %>% 
-  ggplot(aes(x = age_cat, y = CREATININE)) +
+  ggplot(aes(x = age_cat, y = log(CREATININE))) +
   geom_boxplot() +
-  labs(x = "Age category")
+  labs(x = "Age category", y = "log(Serum Creatinine) (mg/dL)")
 ```
 
 ```{r, eval=FALSE}

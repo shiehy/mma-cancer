@@ -15,10 +15,10 @@ b12_2003 <- read_xpt("./data/B12_C_2003.XPT")
 b12_2011 <- read_xpt("./data/B12_G_2011.XPT")
 b12_2013 <- read_xpt("./data/B12_H_2013.XPT")
 # b12_second_2001 <- read_xpt("./data/B12_second_2001.XPT")
-creatinine_2001 <- read_xpt("./data/CREATININE_B_2001.XPT")
-creatinine_2003 <- read_xpt("./data/CREATININE_C_2003.XPT")
-creatinine_2011 <- read_xpt("./data/CREATININE_G_2011.XPT")
-creatinine_2013 <- read_xpt("./data/CREATININE_H_2013.XPT")
+creatinine_2001 <- read_xpt("./data/L40_B_2001.XPT")
+creatinine_2003 <- read_xpt("./data/L40_C_2003.XPT")
+creatinine_2011 <- read_xpt("./data/BIOPRO_G_2011.XPT")
+creatinine_2013 <- read_xpt("./data/BIOPRO_H_2013.XPT")
 # creatinine_second_2001 <- read_xpt("./data/CREATININE_second_2001.XPT")
 demo_2001 <- read_xpt("./data/DEMO_B_2001.XPT")
 demo_2003 <- read_xpt("./data/DEMO_C_2003.XPT")
@@ -69,23 +69,23 @@ b12_2013 <- b12_2013 %>%
   set_variable_labels(B12 = "Serum B12 (pg/mL)")
 
 creatinine_2001 <- creatinine_2001 %>% 
-  select(SEQN, URXUCR) %>% 
-  rename(CREATININE = URXUCR) %>% 
+  select(SEQN, LBDSCR) %>% 
+  rename(CREATININE = LBDSCR) %>% 
   set_variable_labels(CREATININE = "Creatinine (mg/dL)")
 
 creatinine_2003 <- creatinine_2003 %>% 
-  select(SEQN, URXUCR) %>% 
-  rename(CREATININE = URXUCR) %>% 
+  select(SEQN, LBXSCR) %>% 
+  rename(CREATININE = LBXSCR) %>% 
   set_variable_labels(CREATININE = "Creatinine (mg/dL)")
 
 creatinine_2011 <- creatinine_2011 %>% 
-  select(SEQN, URXUCR) %>% 
-  rename(CREATININE = URXUCR) %>% 
+  select(SEQN, LBXSCR) %>% 
+  rename(CREATININE = LBXSCR) %>% 
   set_variable_labels(CREATININE = "Creatinine (mg/dL)")
 
 creatinine_2013 <- creatinine_2013 %>% 
-  select(SEQN, URXUCR) %>% 
-  rename(CREATININE = URXUCR) %>% 
+  select(SEQN, LBXSCR) %>% 
+  rename(CREATININE = LBXSCR) %>% 
   set_variable_labels(CREATININE = "Creatinine (mg/dL)")
 
 demo_2001 <- demo_2001 %>% 
