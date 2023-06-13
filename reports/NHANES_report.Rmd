@@ -30,16 +30,27 @@ nhanes_dat <- nhanes_dat %>%
   filter(complete_data == 1)
 ```
 
+## Notes
+
+* This data was pulled from NHANES (National Health and Nutrition Examination Survey)
+* MMA data was available for the survey years 2001-2002, 2003-2004, 2011-2012, and 2013-2014
+* Data for participants who have complete MMA, B12, and serum creatinine data are included in this report
+
+
 ## Demographics
 
 ```{r}
 nhanes_dat %>% 
-  select(gender, age, age_cat, race_ethnicity, year, B12, CREATININE, MMA, complete_data) %>% 
-  tbl_summary(label = list(complete_data ~ "Patients with complete data (B12, creatinine, MMA)",
-                           age ~ "Age",
+  select(gender, age, age_cat, race_ethnicity, year, B12, CREATININE, MMA,
+         cancer_malignancy, lung_cancer) %>% 
+  mutate(lung_cancer = if_else(is.na(lung_cancer), 0, lung_cancer),
+         cancer_malignancy = if_else(is.na(cancer_malignancy), "No", cancer_malignancy)) %>% 
+  tbl_summary(label = list(age ~ "Age",
                            age_cat ~ "Age (categorical)",
                            year ~ "NHANES year",
-                           race_ethnicity ~ "Race/ethnicity")) %>% 
+                           race_ethnicity ~ "Race/ethnicity",
+                           lung_cancer ~ "Ever had lung cancer",
+                           cancer_malignancy ~ "Ever had cancer or malignancy")) %>% 
   bold_labels()
 ```
 
@@ -51,8 +62,11 @@ nhanes_dat %>%
 nhanes_dat %>% 
   ggplot(aes(x = age_cat, y = log(MMA))) +
   geom_boxplot() +
-  labs(x = "Age category")
+  labs(x = "Age category",
+       title = "log(MMA) by Age Category")
 ```
+
+<br>
 
 ```{r, fig.width=5, fig.height=4}
 nhanes_dat %>% 
@@ -60,8 +74,10 @@ nhanes_dat %>%
   ggplot(aes(x = age_cat, y = MMA)) +
   geom_boxplot() +
   labs(x = "Age category",
-       title = "MMA for participants with B12 > 300 and \n serum creatinine < 1.3")
+       title = "MMA for participants with B12 > 300 and \nserum creatinine < 1.3")
 ```
+
+<br>
 
 ```{r, fig.width=5, fig.height=4}
 nhanes_dat %>% 
@@ -69,16 +85,56 @@ nhanes_dat %>%
   ggplot(aes(x = age_cat, y = log(MMA))) +
   geom_boxplot() +
   labs(x = "Age category",
-       title = "log(MMA) for participants with B12 > 300 and \n serum creatinine < 1.3")
+       title = "log(MMA) for participants with B12 > 300 and \nserum creatinine < 1.3")
 ```
+
+<br>
 
 ```{r, fig.width=5, fig.height=4, message=FALSE}
 nhanes_dat %>% 
-  filter(B12 > 300, CREATININE < 1.3) %>% 
-  ggplot(aes(x = log(MMA))) +
-  geom_histogram() +
-  labs(title = "log(MMA) for participants with B12 > 300 and \n serum creatinine < 1.3")
+  filter(B12 > 300, CREATININE < 1.3) %>%
+  filter(MMA <1000) %>%
+  ggplot(aes(x = MMA)) +
+  geom_histogram(bins = 30) +
+  geom_vline(xintercept = 410) +
+  labs(title = "MMA for participants with B12 > 300 and serum \ncreatinine < 1.3",
+       subtitle = "Note: MMA is restricted to values < 1000 for better visual \nassessment",
+       y = "count") +
+  annotate("text", x = 570, y = 1000, label ="Extreme Outliers")
 ```
+
+<br>
+
+### Table of MMA values by Age
+
+```{r}
+# Summarize median and IQR for each level of the categorical variable
+summary_table_all <- nhanes_dat %>%
+  group_by(age_cat) %>%
+  summarise(`All participants` = paste(
+      sprintf("%.0f", median(MMA)),
+      sprintf("(%.0f, %.0f)", quantile(MMA, 0.25), quantile(MMA, 0.75))))
+
+
+summary_table_restricted <- nhanes_dat %>%
+  filter(B12 > 300, CREATININE < 1.3) %>% 
+  group_by(age_cat) %>%
+  summarise(`Only participants with B12 > 300 and creatinine < 1.3` = paste(
+      sprintf("%.0f", median(MMA)),
+      sprintf("(%.0f, %.0f)", quantile(MMA, 0.25), quantile(MMA, 0.75))))
+
+summary_table <- summary_table_all %>% 
+  full_join(summary_table_restricted, by = "age_cat") %>% 
+  rename(`Age category` = age_cat)
+
+# Display the summary table
+summary_table %>% 
+  kableExtra::kable() %>% 
+  kableExtra::kable_styling(full_width = FALSE) %>% 
+  kableExtra::add_header_above(c("Median (Q1, Q3) of MMA" = 3)) %>% 
+  kableExtra::column_spec(3, width = "12em")
+```
+
 
 <br>
 
@@ -91,6 +147,9 @@ nhanes_dat %>%
   labs(x = "Age category",
        y = "log(B12) (pg/mL)")
 ```
+
+
+<br>
 
 ### Creatinine
 <br>
@@ -126,8 +185,35 @@ nhanes_dat %>%
   mutate(`MMA extreme outlier` = if_else(SEQN %in% mma_outliers$SEQN, 1, 0),
          `B12 extreme outlier` = if_else(SEQN %in% b12_outliers$SEQN, 1, 0),
          `Creatinine extreme outlier` = if_else(SEQN %in% creatinine_outliers$SEQN, 1, 0)) %>% 
+         # extreme_outlier_and_cancer = if_else((`MMA extreme outlier` == 1 | 
+         #                                        `B12 extreme outlier` == 1 |
+         #                                        `Creatinine extreme outlier` == 1) & (cancer_malignancy == "Yes"), 1, 0),
+         # total_extreme_outliers = `MMA extreme outlier`+ `B12 extreme outlier` + `Creatinine extreme outlier`) %>% 
   select(contains("outlier")) %>% 
   tbl_summary() %>% 
   bold_labels()
+```
+
+## Cancer
+
+```{r}
+cancer_pt <- nhanes_dat %>% 
+  mutate(MMA_extreme_outlier = if_else(SEQN %in% mma_outliers$SEQN, 1, 0),
+         B12_extreme_outlier = if_else(SEQN %in% b12_outliers$SEQN, 1, 0),
+         Creatinine_extreme_outlier = if_else(SEQN %in% creatinine_outliers$SEQN, 1, 0)) %>%
+  filter(cancer_malignancy == "Yes")
+```
+
+Of the `r nrow(cancer_pt)` participants who have had a cancer diagnosis, `r sum(cancer_pt$MMA_extreme_outlier == 1 | cancer_pt$B12_extreme_outlier == 1 | cancer_pt$Creatinine_extreme_outlier == 1)` participants have at least one extreme outlier (MMA, B12, or Creatinine). `r sum(cancer_pt$lung_cancer, na.rm = T)` participants have had a lung cancer diagnosis.
+
+### Lung Cancer
+
+```{r}
+nhanes_dat %>% 
+  filter(!is.na(age_lung_cancer_diag)) %>% 
+  ggplot(aes(x = age, y = age_lung_cancer_diag)) +
+  geom_point() +
+  labs(x = "Age at time of NHANES study", 
+       y = "Age at lung cancer diagnosis")
 ```
 

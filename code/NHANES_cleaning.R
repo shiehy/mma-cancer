@@ -6,6 +6,7 @@ library(gtsummary)
 library(haven)
 library(labelled)
 
+
 mma_2001_o <- read_xpt("./data/MMA_B12_B_2001.XPT") # this data contains both mma and b12
 mma_2003 <- read_xpt("./data/MMA_C_2003.XPT")
 mma_2011 <- read_xpt("./data/MMA_G_2011.XPT")
@@ -24,6 +25,11 @@ demo_2001 <- read_xpt("./data/DEMO_B_2001.XPT")
 demo_2003 <- read_xpt("./data/DEMO_C_2003.XPT")
 demo_2011 <- read_xpt("./data/DEMO_G_2011.XPT")
 demo_2013 <- read_xpt("./data/DEMO_H_2013.XPT")
+cancer_2001 <- read_xpt("./data/MEDICAL_CONDITIONS_2001.XPT")
+cancer_2003 <- read_xpt("./data/MEDICAL_CONDITIONS_2003.XPT")
+cancer_2011 <- read_xpt("./data/MEDICAL_CONDITIONS_2011.XPT")
+cancer_2013 <- read_xpt("./data/MEDICAL_CONDITIONS_2013.XPT")
+
 
 mma_2001 <- mma_2001_o %>% 
   select(SEQN, LB2MMA) %>% 
@@ -134,13 +140,40 @@ creatinine <- rbind(creatinine_2001, creatinine_2003, creatinine_2011,
                     creatinine_2013)  
 mma <- rbind(mma_2001, mma_2003, mma_2011, mma_2013) 
 
+
+# Clean cancer data
+
+cancer_2001 <- cancer_2001 %>% 
+  select(SEQN, MCQ220, MCQ230A, MCQ230B, MCQ230C, MCQ230D, MCQ240N)
+cancer_2003 <- cancer_2003 %>% 
+  select(SEQN, MCQ220, MCQ230A, MCQ230B, MCQ230C, MCQ230D, MCQ240N)
+cancer_2011 <- cancer_2011 %>% 
+  select(SEQN, MCQ220, MCQ230A, MCQ230B, MCQ230C, MCQ230D, MCQ240N)
+cancer_2013 <- cancer_2013 %>% 
+  select(SEQN, MCQ220, MCQ230A, MCQ230B, MCQ230C, MCQ230D, MCQ240N)
+
+cancer <- rbind(cancer_2001, cancer_2003, cancer_2011, cancer_2013)
+
+cancer <- cancer %>% 
+  mutate(cancer_malignancy = case_when(MCQ220 == 1 ~ "Yes",
+                                       MCQ220 == 2 ~ "No",
+                                       MCQ220 == 7 ~ "Refused",
+                                       MCQ220 == 9 ~ "Don't know"),
+         lung_cancer = if_else(MCQ230A == 23 | MCQ230B == 23 | MCQ230C == 23 |
+                                 MCQ230D == 23, 1, 0),
+         ) %>% 
+  rename(age_lung_cancer_diag = MCQ240N) %>% 
+  select(SEQN, cancer_malignancy, lung_cancer, age_lung_cancer_diag)
+
+
 nhanes_dat <- demo %>% 
   full_join(b12, by = "SEQN") %>% 
   full_join(creatinine, by = "SEQN") %>% 
   full_join(mma, by = "SEQN") %>% 
   filter(!is.na(B12) | !is.na(CREATININE) | !is.na(MMA)) %>% # remove data points without mma, b12, or creatinine data
+  left_join(cancer, by = "SEQN") %>% 
   mutate(complete_data = if_else(!is.na(B12) & !is.na(CREATININE) & !is.na(MMA), 1, 0))
-
+  
 
 save(nhanes_dat, file = "./output/NHANES_dat.RData")
 
