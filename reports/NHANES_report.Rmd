@@ -30,6 +30,22 @@ nhanes_dat <- nhanes_dat %>%
   filter(complete_data == 1)
 ```
 
+```{r}
+mma_outliers <- identify_outliers(nhanes_dat, variable = "MMA") %>% 
+  filter(is.extreme == TRUE)
+creatinine_outliers <- identify_outliers(nhanes_dat, variable = "CREATININE") %>% 
+  filter(is.extreme == TRUE)
+b12_outliers <- identify_outliers(nhanes_dat, variable = "B12") %>% 
+  filter(is.extreme == TRUE)
+
+nhanes_dat <- nhanes_dat %>% 
+  mutate(`MMA extreme outlier` = if_else(SEQN %in% mma_outliers$SEQN, 1, 0),
+         `B12 extreme outlier` = if_else(SEQN %in% b12_outliers$SEQN, 1, 0),
+         `Creatinine extreme outlier` = if_else(SEQN %in% creatinine_outliers$SEQN, 1, 0))
+
+```
+
+
 ## Notes
 
 * This data was pulled from NHANES (National Health and Nutrition Examination Survey)
@@ -174,17 +190,7 @@ nhanes_dat %>%
 Extreme outliers are defined as values above $Q3 + 3 \cdot IQR$, or below $Q1 - 3 \cdot IQR$.
 
 ```{r, message = FALSE}
-mma_outliers <- identify_outliers(nhanes_dat, variable = "MMA") %>% 
-  filter(is.extreme == TRUE)
-creatinine_outliers <- identify_outliers(nhanes_dat, variable = "CREATININE") %>% 
-  filter(is.extreme == TRUE)
-b12_outliers <- identify_outliers(nhanes_dat, variable = "B12") %>% 
-  filter(is.extreme == TRUE)
-
 nhanes_dat %>% 
-  mutate(`MMA extreme outlier` = if_else(SEQN %in% mma_outliers$SEQN, 1, 0),
-         `B12 extreme outlier` = if_else(SEQN %in% b12_outliers$SEQN, 1, 0),
-         `Creatinine extreme outlier` = if_else(SEQN %in% creatinine_outliers$SEQN, 1, 0)) %>% 
          # extreme_outlier_and_cancer = if_else((`MMA extreme outlier` == 1 | 
          #                                        `B12 extreme outlier` == 1 |
          #                                        `Creatinine extreme outlier` == 1) & (cancer_malignancy == "Yes"), 1, 0),
@@ -194,26 +200,60 @@ nhanes_dat %>%
   bold_labels()
 ```
 
+### MMA Outlier Cross-tab
+
+```{r}
+nhanes_dat %>% 
+  mutate(`MMA extreme outlier` = if_else(`MMA extreme outlier` == 1, 
+                                         "MMA extreme outlier", "Not an MMA extreme outlier"), 
+         `B12 < 400` = if_else(B12 < 400, 1, 0),
+         `Serum creatinine > 1.3` = if_else(CREATININE > 1.3, 1, 0),
+         lung_cancer = if_else(is.na(lung_cancer), 0, lung_cancer)) %>% 
+  select(`MMA extreme outlier`, `B12 < 400`, `Serum creatinine > 1.3`, cancer_malignancy,
+         lung_cancer, age) %>% 
+  tbl_summary(by = `MMA extreme outlier`,
+              label = list(lung_cancer ~ "Ever had lung cancer",
+                           cancer_malignancy ~ "Ever had cancer or malignancy",
+                           age ~ "Age")) %>% 
+  bold_labels() %>% 
+  add_p() %>% 
+  bold_p() %>% 
+  modify_spanning_header(all_stat_cols() ~ "**MMA outlier status**")
+```
+
 ## Cancer
 
 ```{r}
 cancer_pt <- nhanes_dat %>% 
-  mutate(MMA_extreme_outlier = if_else(SEQN %in% mma_outliers$SEQN, 1, 0),
-         B12_extreme_outlier = if_else(SEQN %in% b12_outliers$SEQN, 1, 0),
-         Creatinine_extreme_outlier = if_else(SEQN %in% creatinine_outliers$SEQN, 1, 0)) %>%
   filter(cancer_malignancy == "Yes")
 ```
 
-Of the `r nrow(cancer_pt)` participants who have had a cancer diagnosis, `r sum(cancer_pt$MMA_extreme_outlier == 1 | cancer_pt$B12_extreme_outlier == 1 | cancer_pt$Creatinine_extreme_outlier == 1)` participants have at least one extreme outlier (MMA, B12, or Creatinine). `r sum(cancer_pt$lung_cancer, na.rm = T)` participants have had a lung cancer diagnosis.
-
 ### Lung Cancer
+
+```{r, fig.width=5, fig.height=4}
+nhanes_dat %>% 
+  filter(!is.na(age_lung_cancer_diag)) %>% 
+  mutate(time_bt_lung_cancer_nhanes = age - age_lung_cancer_diag) %>% 
+  ggplot(aes(x = time_bt_lung_cancer_nhanes)) +
+  geom_histogram(bins = 8) +
+  labs(x = "Time between lung cancer diagnosis and study enrollment (years)", 
+       y = "Count")
+```
+
+
+### Lab values by cancer status
+
 
 ```{r}
 nhanes_dat %>% 
-  filter(!is.na(age_lung_cancer_diag)) %>% 
-  ggplot(aes(x = age, y = age_lung_cancer_diag)) +
-  geom_point() +
-  labs(x = "Age at time of NHANES study", 
-       y = "Age at lung cancer diagnosis")
+  select(MMA, B12, CREATININE, age, cancer_malignancy) %>% 
+  filter(!is.na(cancer_malignancy), cancer_malignancy != "Don't know") %>% 
+  tbl_summary(by = cancer_malignancy,
+              label = list(cancer_malignancy ~ "Ever had cancer or malignancy",
+                           age ~ "Age")) %>% 
+  bold_labels() %>% 
+  add_p() %>% 
+  bold_p() %>% 
+  modify_spanning_header(all_stat_cols() ~ "**Participant ever had cancer or malignancy**")
 ```
 
