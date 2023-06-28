@@ -174,6 +174,20 @@ nhanes_dat <- demo %>%
   left_join(cancer, by = "SEQN") %>% 
   mutate(complete_data = if_else(!is.na(B12) & !is.na(CREATININE) & !is.na(MMA), 1, 0))
   
-
 save(nhanes_dat, file = "./output/NHANES_dat.RData")
 
+
+# Clean lung cancer patient data
+
+cancer_pts <- read_xlsx("./data/MMA Treatment Naive_June 20_2023.xlsx")
+
+cancer_pts <- cancer_pts %>% 
+  rename(SEQN = Label,
+         MMA = `MMA (umol/L)`,
+         age = Age,
+         CREATININE = creatinine) %>% 
+  select(SEQN, age, MMA, B12, CREATININE) %>% 
+  mutate(cancer = 1)
+
+
+save(cancer_pts, file = "./output/cancer_pts.RData")
