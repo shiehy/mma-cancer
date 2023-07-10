@@ -179,7 +179,7 @@ save(nhanes_dat, file = "./output/NHANES_dat.RData")
 
 # Clean lung cancer patient data
 
-cancer_pts <- read_xlsx("./data/MMA Treatment Naive_June 20_2023.xlsx")
+cancer_pts <- read_xlsx("/Volumes/Shieh-share$/MMA_Cancer/data/MMA Treatment Naive_June 20_2023.xlsx")
 
 cancer_pts <- cancer_pts %>% 
   rename(SEQN = Label,
@@ -190,4 +190,4 @@ cancer_pts <- cancer_pts %>%
   mutate(cancer = 1)
 
 
-save(cancer_pts, file = "./output/cancer_pts.RData")
+save(cancer_pts, file = "/Volumes/Shieh-share$/MMA_Cancer/output/cancer_pts.RData")

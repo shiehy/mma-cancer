@@ -19,7 +19,7 @@ library(tidyverse)
 library(gtsummary)
 
 load(here::here("./output/NHANES_dat.RData"))
-load(here::here("./output/cancer_pts.RData"))
+load("/Volumes/Shieh-share$/MMA_Cancer/output/cancer_pts.RData")
 
 # change NHANES data format to match lung cancer data format
 nhanes_matching <- nhanes_dat %>% 
