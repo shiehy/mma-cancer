@@ -189,5 +189,23 @@ cancer_pts <- cancer_pts %>%
   select(SEQN, age, MMA, B12, CREATININE) %>% 
   mutate(cancer = 1)
 
-
 save(cancer_pts, file = "/Volumes/Shieh-share$/MMA_Cancer/output/cancer_pts.RData")
+
+# Merge case & control data
+
+nhanes_dat <- nhanes_dat %>% 
+  # mutate(MMA = MMA/1000) %>% # convert nmol/L to umol/L
+  filter(cancer_malignancy == "No", # remove any NHANES participants with a history of cancer
+         !is.na(B12), # remove participants missing B12 or Creatinine data
+         !is.na(CREATININE)) %>% 
+  select(SEQN, age, MMA, B12, CREATININE) %>% 
+  mutate(cancer = 0)
+
+cancer_pts <- cancer_pts %>% 
+  mutate(MMA = MMA*1000) # convert umol/L to nmol/L
+
+# combine nhanes with lung cancer data
+all_cases_controls <- rbind(cancer_pts, nhanes_dat)
+
+save(all_cases_controls, file = "/Volumes/Shieh-share$/MMA_Cancer/output/all_cases_controls.RData")
+

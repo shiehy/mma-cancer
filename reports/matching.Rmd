@@ -18,40 +18,8 @@ library(readxl)
 library(tidyverse)
 library(gtsummary)
 
+load("/Volumes/Shieh-share$/MMA_Cancer/output/all_cases_controls.RData")
 load(here::here("./output/NHANES_dat.RData"))
-load("/Volumes/Shieh-share$/MMA_Cancer/output/cancer_pts.RData")
-
-# change NHANES data format to match lung cancer data format
-nhanes_matching <- nhanes_dat %>% 
-  mutate(MMA = MMA/1000) %>% # convert nmol/L to umol/L
-  filter(cancer_malignancy == "No", # remove any NHANES participants with a history of cancer
-         !is.na(B12), # remove participants missing B12 or Creatinine data
-         !is.na(CREATININE)) %>% 
-  select(SEQN, age, MMA, B12, CREATININE) %>% 
-  mutate(cancer = 0)
-
-# combine nhanes with lung cancer data
-data <- rbind(cancer_pts, nhanes_matching)
-
-```
-
-```{r, eval=FALSE}
-# data for power calculation
-
-matched_data_all <- matched_data %>% 
-  mutate(MMA = 1000*MMA) # convert MMA to nmol/L from umol/L to make OR more interpretable
-
-# calculate standard deviation of MMA
-sd(matched_data_all$MMA)
-
-# calculate R^2 by regressing other covariates on MMA
-mod <- glm(MMA ~ age + B12 + CREATININE, data = matched_data_all)
-
-residuals <- residuals(mod)
-SSM <- sum((fitted(mod) - mean(matched_data_all$MMA))^2)
-SST <- sum((matched_data_all$MMA - mean(matched_data_all$MMA))^2)
-r_squared <- 1 - (sum(residuals^2) / SST)
-r_squared
 ```
 
 
@@ -60,31 +28,31 @@ r_squared
 
 ```{r}
 # 1:3 optimal matching using MatchIt package
-m.out3 <- matchit(cancer ~ age + B12 + CREATININE, 
-                  data = data, method = "optimal", ratio = 3)
+m_out3 <- matchit(cancer ~ age + B12 + CREATININE, 
+                  data = all_cases_controls, method = "optimal", ratio = 3)
 
-summary(m.out3)
+summary(m_out3)
 
-matched_data <- match.data(m.out3)
+matched_data_3 <- match.data(m_out3)
 
 ```
 
 ### Assess the quality of matches
 
 ```{r}
-plot(m.out3, type = "jitter", interactive = FALSE)
+plot(m_out3, type = "jitter", interactive = FALSE)
 
-plot(m.out3, type = "density", interactive = FALSE,
+plot(m_out3, type = "density", interactive = FALSE,
      which.xs = ~age + B12 + CREATININE)
 
-plot(summary(m.out3), xlim = c(0,3.6))
+plot(summary(m_out3), xlim = c(0,3.6))
 ```
 
 ### Assess NHANES year of matches
 
 ```{r}
 nhanes_dat %>% 
-  filter(SEQN %in% matched_data$SEQN) %>% 
+  filter(SEQN %in% matched_data_3$SEQN) %>% 
   select(year) %>% 
   tbl_summary() %>% 
   bold_labels()
@@ -95,30 +63,30 @@ nhanes_dat %>%
 
 ```{r}
 # 1:4 optimal matching using MatchIt package
-m.out4 <- matchit(cancer ~ age + B12 + CREATININE, 
-                 data = data, method = "optimal", ratio = 4)
+m_out4 <- matchit(cancer ~ age + B12 + CREATININE, 
+                  data = all_cases_controls, method = "optimal", ratio = 4)
 
-summary(m.out4)
+summary(m_out4)
 
-matched_data <- match.data(m.out4)
+matched_data_4 <- match.data(m_out4)
 ```
 
 ### Assess the quality of matches
 
 ```{r}
-plot(m.out4, type = "jitter", interactive = FALSE)
+plot(m_out4, type = "jitter", interactive = FALSE)
 
-plot(m.out4, type = "density", interactive = FALSE,
+plot(m_out4, type = "density", interactive = FALSE,
      which.xs = ~age + B12 + CREATININE)
 
-plot(summary(m.out4), xlim = c(0,3.6))
+plot(summary(m_out4), xlim = c(0,3.6))
 ```
 
 ### Assess NHANES year of matches
 
 ```{r}
 nhanes_dat %>% 
-  filter(SEQN %in% matched_data$SEQN) %>% 
+  filter(SEQN %in% matched_data_4$SEQN) %>% 
   select(year) %>% 
   tbl_summary() %>% 
   bold_labels()
@@ -130,22 +98,47 @@ nhanes_dat %>%
 
 ```{r}
 # 1:3 optimal matching using MatchIt package
-m.out.prop <- matchit(cancer ~ age + B12 + CREATININE, 
-                      data = data, method = "nearest", ratio = 3)
+m_out_prop <- matchit(cancer ~ age + B12 + CREATININE, 
+                      data = all_cases_controls, method = "nearest", ratio = 3)
 
-summary(m.out.prop)
+summary(m_out_prop)
 
-matched_data2 <- match.data(m.out.prop)
+matched_data_prop <- match.data(m_out_prop)
 ```
 
 ### Assess the quality of matches
 
 ```{r}
-plot(m.out.prop, type = "jitter", interactive = FALSE)
+plot(m_out_prop, type = "jitter", interactive = FALSE)
 
-plot(m.out.prop, type = "density", interactive = FALSE,
+plot(m_out_prop, type = "density", interactive = FALSE,
      which.xs = ~age + B12 + CREATININE)
 
-plot(summary(m.out.prop), xlim = c(0,3.6))
+plot(summary(m_out_prop), xlim = c(0,3.6))
 ```
+
+
+```{r, eval=FALSE}
+# data for power calculation
+
+# calculate standard deviation of MMA
+sd(matched_data_3$MMA)
+
+# calculate R^2 by regressing other covariates on MMA
+mod <- glm(MMA ~ age + B12 + CREATININE, data = matched_data_3)
+
+residuals <- residuals(mod)
+SSM <- sum((fitted(mod) - mean(matched_data_3$MMA))^2)
+SST <- sum((matched_data_3$MMA - mean(matched_data_3$MMA))^2)
+r_squared <- 1 - (sum(residuals^2) / SST)
+r_squared
+```
+
+```{r, eval=FALSE}
+# save 1:3 matched data
+
+save(matched_data_3, file = "/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_3.RData")
+save(matched_data_4, file = "/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_4.RData")
+```
+
 
