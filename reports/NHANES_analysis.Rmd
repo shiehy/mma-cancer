@@ -51,9 +51,31 @@ model %>%
   tbl_regression(exp = T,
                  estimate_fun = purrr::partial(style_ratio, digits = 4)) %>%
   bold_p()
+
+model2 <- clogit(cancer ~ MMA + age + B12 + CREATININE + strata(subclass),
+                 data = matched_data_3, id = subclass)
+
+model %>% 
+  tbl_regression(exp = T,
+                 estimate_fun = purrr::partial(style_ratio, digits = 4)) %>%
+  bold_p()
 ```
 
 <br>
+
+## Compare Log-transformed and Untransformed models
+
+```{r}
+library(AICcmodavg)
+
+models_list <- list(model, model2)
+#specify model names
+mod.names <- c('log-transformed', 'untransformed')
+
+#calculate AIC of each model
+aictab(cand.set = models_list, modnames = mod.names)
+```
+
 
 ```{r, eval=FALSE, include = FALSE}
 model <- clogit(cancer ~ log_MMA + B12 + strata(subclass),
@@ -65,6 +87,57 @@ model %>%
                  estimate_fun = purrr::partial(style_ratio, digits = 4)) %>%
   bold_p()
 ```
+
+## Check model assumptions
+
+```{r, message=FALSE, echo = FALSE}
+model_untransformed <- glm(cancer ~ MMA + B12 + CREATININE + age,
+                           data = matched_data_3, family = binomial)
+
+probabilities <- predict(model_untransformed, type = "response")
+predicted.classes <- ifelse(probabilities > 0.5, "pos", "neg")
+head(predicted.classes)
+
+predictors <- c("MMA", "B12", "CREATININE", "age")
+data_untransformed <- matched_data_3 %>%
+  select(MMA, B12, CREATININE, age) %>% 
+  mutate(logit = log(probabilities/(1-probabilities))) %>%
+  gather(key = "predictors", value = "predictor.value", -logit)
+
+ggplot(data_untransformed, aes(logit, predictor.value))+
+  geom_point(size = 0.5, alpha = 0.5) +
+  geom_smooth(method = "loess") + 
+  theme_bw() + 
+  facet_wrap(~predictors, scales = "free_y") +
+  labs(title = "Untransformed model")
+```
+
+```{r, message=FALSE, echo = FALSE}
+data_transformed <- matched_data_3 %>% 
+  mutate(log_B12 = log(B12),
+         log_CREATININE = log(CREATININE))
+
+model_transformed <- glm(cancer ~ log_MMA + log_B12 + log_CREATININE + age,
+                             data = data_transformed, family = binomial)
+
+probabilities <- predict(model_transformed, type = "response")
+predicted.classes <- ifelse(probabilities > 0.5, "pos", "neg")
+# head(predicted.classes)
+
+predictors <- c("log_MMA", "log_B12", "log_CREATININE", "age")
+data_transformed <- data_transformed %>%
+  select(log_MMA, log_B12, log_CREATININE, age) %>% 
+  mutate(logit = log(probabilities/(1-probabilities))) %>%
+  gather(key = "predictors", value = "predictor.value", -logit)
+
+ggplot(data_transformed, aes(logit, predictor.value))+
+  geom_point(size = 0.5, alpha = 0.5) +
+  geom_smooth(method = "loess") + 
+  theme_bw() + 
+  facet_wrap(~predictors, scales = "free_y") +
+  labs(title = "Log-transformed model")
+```
+
 
 ```{r, eval=FALSE, include=FALSE}
 matched_data_3_cases <- matched_data_3 %>% 
