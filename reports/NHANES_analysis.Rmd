@@ -24,6 +24,9 @@ load("/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_3.RData")
 # load("/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_3_adj.RData")
 # load("/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_3_cat.RData")
 
+matched_data_3 <- matched_data_3 %>% 
+  mutate(MMA_quartile = factor(ntile(MMA, n = 4)))
+
 ```
 
 ## Conditional Logistic Regression - 1:3 Optimal Matching
@@ -57,15 +60,23 @@ model %>%
 Holding age, B12, and Creatinine constant, for a one standard deviation increase in log MMA, the odds of having lung cancer are 130% higher. The odds ratio (OR) is 2.30 (95% CI: 1.29, 4.08).
 
 
-```{r, eval=FALSE, include=FALSE}
-# model2 <- clogit(cancer ~ MMA + age + B12 + CREATININE + strata(subclass),
-#                  data = matched_data_3, id = subclass)
-# 
-# model %>% 
-#   tbl_regression(exp = T,
-#                  estimate_fun = purrr::partial(style_ratio, digits = 4)) %>%
-#   bold_p()
+### MMA quartiles
+
+Using the same matched data, the below model uses a CLR with MMA in terms of quartiles rather than continuous. Quartiles were calculated using all individuals (both cases and controls), and quartile 1 represents the lowest values of MMA and quartile 4 represents the highest values of MMA.
+
+```{r}
+model2 <- clogit(cancer ~ MMA_quartile + age + B12 + CREATININE + strata(subclass),
+                 data = matched_data_3, id = subclass)
+
+model2 %>%
+  tbl_regression(exp = T,
+                 estimate_fun = purrr::partial(style_ratio, digits = 2),
+                 include = MMA_quartile) %>%
+  bold_p()
 ```
+
+Holding age, B12, and Creatinine constant, for someone in the highest quartile of MMA, the odds of having lung cancer are 5.69 times that of someone in the lowest quartile. The odds ratio (OR) is 5.69 (95% CI: 1.17, 27.73).
+
 
 <br>
 
