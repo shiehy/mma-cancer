@@ -20,35 +20,55 @@ library(gtsummary)
 
 load("/Volumes/Shieh-share$/MMA_Cancer/output/all_cases_controls.RData")
 load(here::here("./output/NHANES_dat.RData"))
+
+# recode age for anyone in the lung cancer dataset who is over 85 to be in the 85
+# category in order to match what was done with the NHANES data
+all_cases_controls <- all_cases_controls %>%
+  mutate(age_adj = if_else(age > 85, 85, age),
+         age_cat = case_when(age >= 85 ~ "85-90",
+                             age >= 80 ~ "80-84",
+                             age >= 75 ~ "75-79",
+                             age >= 70 ~ "70-74",
+                             age >= 65 ~ "65-69",
+                             age >= 60 ~ "60-64",
+                             age >= 55 ~ "55-59",
+                             age >= 50 ~ "50-54",
+                             age >= 45 ~ "45-49",
+                             age >= 40 ~ "40-44",
+                             age >= 35 ~ "35-39",
+                             age >= 30 ~ "30-34",
+                             age >= 25 ~ "25-29",
+                             age >= 20 ~ "20-24"))
 ```
 
 
-## 1:3 Optimal Matching using the MatchIt package
+## 1:3 Optimal Matching
 
+### Age raw values
 
 ```{r}
 # 1:3 optimal matching using MatchIt package
-m_out3 <- matchit(cancer ~ age + B12 + CREATININE, 
-                  data = all_cases_controls, method = "optimal", ratio = 3)
+m_out3_age <- matchit(cancer ~ age + B12 + CREATININE, 
+                      data = all_cases_controls, method = "optimal", ratio = 3)
 
-summary(m_out3)
+summary(m_out3_age)
 
-matched_data_3 <- match.data(m_out3)
+matched_data_3 <- match.data(m_out3_age)
 
 ```
 
-### Assess the quality of matches
+#### Assess the quality of matches
 
 ```{r}
-plot(m_out3, type = "jitter", interactive = FALSE)
+plot(m_out3_age, type = "jitter", interactive = FALSE)
 
-plot(m_out3, type = "density", interactive = FALSE,
+plot(m_out3_age, type = "density", interactive = FALSE,
      which.xs = ~age + B12 + CREATININE)
 
-plot(summary(m_out3), xlim = c(0,3.6))
+plot(summary(m_out3_age), xlim = c(0,3.6))
 ```
 
-### Assess NHANES year of matches
+#### Assess NHANES year of matches
 
 ```{r}
 nhanes_dat %>% 
@@ -57,6 +77,79 @@ nhanes_dat %>%
   tbl_summary() %>% 
   bold_labels()
 ```
+
+### Age adjusted
+
+```{r}
+# 1:3 optimal matching using MatchIt package
+# adjust for age 
+m_out3_adj <- matchit(cancer ~ age_adj + B12 + CREATININE, 
+                  data = all_cases_controls, method = "optimal", ratio = 3)
+
+summary(m_out3_adj)
+
+matched_data_3_adj <- match.data(m_out3_adj)
+
+```
+
+#### Assess the quality of matches
+
+```{r}
+plot(m_out3_adj, type = "jitter", interactive = FALSE)
+
+plot(m_out3_adj, type = "density", interactive = FALSE,
+     which.xs = ~age_adj + B12 + CREATININE)
+
+plot(summary(m_out3_adj), xlim = c(0,3.6))
+```
+
+#### Assess NHANES year of matches
+
+```{r}
+nhanes_dat %>% 
+  filter(SEQN %in% matched_data_3_adj$SEQN) %>% 
+  select(year) %>% 
+  tbl_summary() %>% 
+  bold_labels()
+```
+
+
+### Age categorical
+
+```{r}
+# 1:3 optimal matching using MatchIt package
+# adjust for age categorical
+
+m_out3_cat <- matchit(cancer ~ age_cat + B12 + CREATININE, 
+                      data = all_cases_controls, method = "optimal", ratio = 3)
+
+summary(m_out3_cat)
+
+matched_data_3_cat <- match.data(m_out3_cat)
+
+```
+
+#### Assess the quality of matches
+
+```{r}
+plot(m_out3_cat, type = "jitter", interactive = FALSE)
+
+plot(m_out3_cat, type = "density", interactive = FALSE,
+     which.xs = ~age_cat + B12 + CREATININE)
+
+plot(summary(m_out3_cat), xlim = c(0,3.6))
+```
+
+#### Assess NHANES year of matches
+
+```{r}
+nhanes_dat %>% 
+  filter(SEQN %in% matched_data_3_cat$SEQN) %>% 
+  select(year) %>% 
+  tbl_summary() %>% 
+  bold_labels()
+```
+
 
 ## 1:4 Optimal Matching using the MatchIt package
 
@@ -117,6 +210,58 @@ plot(m_out_prop, type = "density", interactive = FALSE,
 plot(summary(m_out_prop), xlim = c(0,3.6))
 ```
 
+## 1:3 Propensity score matching, using a caliper of +/- 5 years for age
+
+
+```{r}
+# 1:3 optimal matching using MatchIt package
+m_out_prop_cal2 <- matchit(cancer ~ age_adj + B12 + CREATININE, 
+                           data = all_cases_controls, method = "nearest", ratio = 3,
+                           caliper = c(age_adj = 2.5), std.caliper = c(FALSE))
+
+summary(m_out_prop_cal2)
+
+matched_data_cal2 <- match.data(m_out_prop_cal2)
+
+```
+
+### Assess the quality of matches
+
+```{r}
+plot(m_out_prop_cal2, type = "jitter", interactive = FALSE)
+
+plot(m_out_prop_cal2, type = "density", interactive = FALSE,
+     which.xs = ~age_adj + B12 + CREATININE)
+
+plot(summary(m_out_prop_cal2), xlim = c(0,3.6))
+```
+
+## 1:3 Propensity score matching, using a caliper of +/- 1 years for age
+
+
+```{r}
+# 1:3 optimal matching using MatchIt package
+m_out_prop_cal1 <- matchit(cancer ~ age_adj + B12 + CREATININE, 
+                          data = all_cases_controls, method = "nearest", ratio = 3,
+                          caliper = c(age_adj = 1), std.caliper = c(FALSE))
+
+summary(m_out_prop_cal1)
+
+matched_data_cal1 <- match.data(m_out_prop_cal1)
+
+```
+
+### Assess the quality of matches
+
+```{r}
+plot(m_out_prop_cal1, type = "jitter", interactive = FALSE)
+
+plot(m_out_prop_cal1, type = "density", interactive = FALSE,
+     which.xs = ~age_adj + B12 + CREATININE)
+
+plot(summary(m_out_prop_cal1), xlim = c(0,3.6))
+```
+
 
 ```{r, eval=FALSE}
 # data for power calculation
@@ -138,7 +283,12 @@ r_squared
 # save 1:3 matched data
 
 save(matched_data_3, file = "/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_3.RData")
-save(matched_data_4, file = "/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_4.RData")
+save(matched_data_3_adj, 
+     file = "/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_3_adj.RData")
+save(matched_data_3_cat, file = "/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_3_cat.RData")
+# save(matched_data_4, file = "/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_4.RData")
+save(matched_data_cal2, 
+     file = "/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_cal2.RData")
 ```
 
 

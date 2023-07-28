@@ -12,26 +12,25 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 
 library(survival)
 library(tidyverse)
 library(gtsummary)
 
 load("/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_3.RData")
-load("/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_4.RData")
+# load("/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_4.RData")
+# load("/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_cal2.RData")
+# load("/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_3_adj.RData")
+# load("/Volumes/Shieh-share$/MMA_Cancer/output/matched_data_3_cat.RData")
 
 ```
 
-## Conditional Logistic Regression
+## Conditional Logistic Regression - 1:3 Optimal Matching
 
-This is a 1:3 matched case-control study, assessing if there is an association between MMA and lung cancer. 
-
-Units of lab data:
-
-  - MMA: nmol/L
-  - B12: pg/mL
-  - Creatinine: mg/dL
+This is a 1:3 matched case-control study, assessing if there is an association between MMA (nmol/L) and lung cancer. 24 cases (individuals with lung cancer, pre-treatment) were each matched with 3 controls from the NHANES dataset for a total of 96 individuals included in the analysis. Matching variables were age, B12 (pg/mL), and Creatinine (mg/dL). 
+  
+The below model is a conditional logistic regression (CLR) model which takes matching into account. The outcome in the CLR model is lung cancer. MMA, B12, and Creatinine are all highly skewed covariates so the log of each is included in the model. The coefficient of log(MMA) has been standardized such that the odds ratio for that covariate represents the odds of lung cancer for a one standard deviation increase in log(MMA).
 
 ```{r}
 # take the log of MMA and standardize it to calculate the standardized OR
@@ -44,53 +43,37 @@ matched_data_3 <- matched_data_3 %>%
 #   ggplot(aes(x = log(B12))) +
 #   geom_histogram(bins = 15)
 
-model <- clogit(cancer ~ log_MMA_standardized + age + log(B12) + log(CREATININE) + strata(subclass),
+model <- clogit(cancer ~ log_MMA_standardized + age + log(B12) + 
+                  log(CREATININE) + strata(subclass),
                 data = matched_data_3, id = subclass)
 
 model %>% 
   tbl_regression(exp = T,
                  estimate_fun = purrr::partial(style_ratio, digits = 4)) %>%
   bold_p()
+```
 
-model2 <- clogit(cancer ~ MMA + age + B12 + CREATININE + strata(subclass),
-                 data = matched_data_3, id = subclass)
 
-model %>% 
-  tbl_regression(exp = T,
-                 estimate_fun = purrr::partial(style_ratio, digits = 4)) %>%
-  bold_p()
+Holding age, B12, and Creatinine constant, for a one standard deviation increase in log MMA, the odds of having lung cancer are 130% higher. The odds ratio (OR) is 2.30 (95% CI: 1.29, 4.08).
+
+
+```{r, eval=FALSE, include=FALSE}
+# model2 <- clogit(cancer ~ MMA + age + B12 + CREATININE + strata(subclass),
+#                  data = matched_data_3, id = subclass)
+# 
+# model %>% 
+#   tbl_regression(exp = T,
+#                  estimate_fun = purrr::partial(style_ratio, digits = 4)) %>%
+#   bold_p()
 ```
 
 <br>
 
-## Compare Log-transformed and Untransformed models
-
-```{r}
-library(AICcmodavg)
-
-models_list <- list(model, model2)
-#specify model names
-mod.names <- c('log-transformed', 'untransformed')
-
-#calculate AIC of each model
-aictab(cand.set = models_list, modnames = mod.names)
-```
 
 
-```{r, eval=FALSE, include = FALSE}
-model <- clogit(cancer ~ log_MMA + B12 + strata(subclass),
-                data = matched_data_3, id = subclass)
-# summary(model)
-
-model %>% 
-  tbl_regression(exp = T,
-                 estimate_fun = purrr::partial(style_ratio, digits = 4)) %>%
-  bold_p()
-```
-
+```{r, message=FALSE, echo = FALSE, eval=FALSE}
 ## Check model assumptions
 
-```{r, message=FALSE, echo = FALSE}
 model_untransformed <- glm(cancer ~ MMA + B12 + CREATININE + age,
                            data = matched_data_3, family = binomial)
 
@@ -112,7 +95,7 @@ ggplot(data_untransformed, aes(logit, predictor.value))+
   labs(title = "Untransformed model")
 ```
 
-```{r, message=FALSE, echo = FALSE}
+```{r, message=FALSE, echo = FALSE, eval=FALSE}
 data_transformed <- matched_data_3 %>% 
   mutate(log_B12 = log(B12),
          log_CREATININE = log(CREATININE))
@@ -153,17 +136,17 @@ matched_data_3 %>%
 # try to avoid sparse data problem by filtering on CREATININE < 1.01 which is the max value of CREATININE
 # in the cases group
 
-matched_data_3_creatinine <- matched_data_3 %>% 
-  filter(CREATININE <= 1.01)
-
-model2 <- clogit(cancer ~ MMA + age + B12 + CREATININE + strata(subclass),
-                data = matched_data_3_creatinine, id = subclass)
-summary(model2)
-
-model2 %>% 
-  tbl_regression(exp = T,
-                 estimate_fun = purrr::partial(style_ratio, digits = 4)) %>%
-  bold_p()
+# matched_data_3_creatinine <- matched_data_3 %>% 
+#   filter(CREATININE <= 1.01)
+# 
+# model2 <- clogit(cancer ~ MMA + age + B12 + CREATININE + strata(subclass),
+#                 data = matched_data_3_creatinine, id = subclass)
+# summary(model2)
+# 
+# model2 %>% 
+  # tbl_regression(exp = T,
+  #                estimate_fun = purrr::partial(style_ratio, digits = 4)) %>%
+  # bold_p()
 
 ```
 
