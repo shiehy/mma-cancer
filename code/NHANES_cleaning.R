@@ -197,7 +197,8 @@ nhanes_dat <- nhanes_dat %>%
   # mutate(MMA = MMA/1000) %>% # convert nmol/L to umol/L
   filter(cancer_malignancy == "No", # remove any NHANES participants with a history of cancer
          !is.na(B12), # remove participants missing B12 or Creatinine data
-         !is.na(CREATININE)) %>% 
+         !is.na(CREATININE),
+         !is.na(MMA)) %>% 
   select(SEQN, age, MMA, B12, CREATININE) %>% 
   mutate(cancer = 0)
 
