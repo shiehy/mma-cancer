@@ -14,6 +14,13 @@ ukb.geno.mma <- raw.geno %>%
   mutate_at(vars(eid), as.character)
 
 
+### Check allele frequencies
+af.func <- function(x){
+  sum(x, na.rm=T)/(2*nrow(ukb.geno.mma))
+}
+
+af.func(ukb.geno.mma$rs291466_A) # AFs: A=0.41, G=0.59; this matches up w/ GWAS and 1000 Genomes
+
 ### Load & merge cleaned UKB breast data
 load("/Volumes/Shieh-share$/SNPTumor/data/processed/UKB_cleaned.RData")
 
@@ -28,7 +35,7 @@ dat <- breast_mma %>%
   relocate(starts_with("rs"), .after=last_col()) %>%
   mutate(fu_yrs = fu_time/365)
 
-### KM plot
+### KM plot for rs291466 (G is effect allele -> higher MMA)
 km <- with(dat, Surv(fu_yrs, breast_death))
 km_pc_fit <- survfit(Surv(fu_yrs, breast_death)~rs291466_A, data=dat)
 
@@ -42,5 +49,7 @@ ggsurvplot(km_pc_fit, data = dat,
            font.x = c(14), font.y = c(14),
            font.tickslab = c(12))
 
+### Sensitivity analyses
+table(dat$breast_death) #544 deaths d/t breast cancer
 
-### Other diagnostics
+
