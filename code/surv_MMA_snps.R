@@ -50,6 +50,16 @@ ggsurvplot(km_pc_fit, data = dat,
            font.tickslab = c(12))
 
 ### Sensitivity analyses
-table(dat$breast_death) #544 deaths d/t breast cancer
 
+# Breast death y/n
+t <- table(dat$breast_death, dat$rs291466_A) #544 deaths d/t breast cancer, no assoc w/ genotype
+chisq.test(t)
+
+# By age
+
+dat %>%
+  mutate(earlydx = case_when(breast_dxage_any < 50 ~ 1,
+         TRUE ~ 0)) %>%
+  group_by(earlydx) %>%
+  summarise(pval = chisq.test(breast_death, rs291466_A)$p.value)
 
