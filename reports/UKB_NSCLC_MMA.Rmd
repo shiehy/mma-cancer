@@ -1,0 +1,61 @@
+---
+title: "MMA vs NSCLC in UKB"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  wcmtheme::wcm_html: 
+    toc: true
+    toc_float: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(tidyverse)
+library(gtsummary)
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(gt)
+library(survminer)
+library(survival)
+
+theme_set(theme_minimal())
+theme_gtsummary_compact()
+options(knitr.kable.NA = '')
+
+datapath="/Volumes/Shieh-share$/MMA_Cancer/data/"
+load(paste0(datapath, "UKB_nonsmall_MMAsnps.RData"))
+
+```
+
+```{r}
+dat <- merged_nonsmall_all %>%
+  subset(lungnonsmall_incid_any == 1) %>%
+  select(eid, lung_death, fu_time, lungnonsmall_dxage_any, any_of(starts_with("PC")), any_of(starts_with("rs291466"))) %>%
+  relocate(starts_with("rs"), .after=last_col()) %>%
+  mutate(fu_yrs = fu_time/365)
+```
+
+```{r}
+km <- with(dat, Surv(fu_yrs, lung_death))
+km_pc_fit <- survfit(Surv(fu_yrs, lung_death)~rs291466_A, data=dat)
+
+ggsurvplot(km_pc_fit, data = dat, 
+           pval=TRUE, pval.method=T, conf.int=F,
+           ylim=c(0,1), xlim=c(0,10), break.time.by=2, xlab = "Time (years)",
+           pval.coord = c(8, 0.835), pval.method.coord = c(8, 0.9),
+           legend = c(0.15, 0.25), legend.labs=c("GG", "AG", "AA"), legend.title="Genotype",
+           risk.table = T, risk.table.height = 0.3, tables.theme=theme_survminer(), risk.table.fontsize=4,
+           ggtheme=theme_classic(), palette=c("#482677FF", "#1F968BFF", "#FDE725FF"),
+           font.x = c(14), font.y = c(14),
+           font.tickslab = c(12))
+
+```
+
+```{r}
+cox_pcs <- coxph(Surv(fu_time, lung_death)~rs291466_A + PC1+PC2+PC3+PC4+PC5+PC6+PC7+PC8+PC9+PC10 + lungnonsmall_dxage_any, data=dat)
+summary(cox_pcs)
+```
+
