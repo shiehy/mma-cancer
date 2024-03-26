@@ -63,3 +63,7 @@ dat %>%
   group_by(earlydx) %>%
   summarise(pval = chisq.test(breast_death, rs291466_A)$p.value)
 
+
+### Cox model
+cox_pcs <- coxph(Surv(fu_time, breast_death)~rs291466_A + PC1+PC2+PC3+PC4+PC5+PC6+PC7+PC8+PC9+PC10 + breast_dxage_any, data=dat)
+summary(cox_pcs)
